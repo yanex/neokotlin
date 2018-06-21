@@ -7,6 +7,7 @@ import java.util.*
 class Config(private val properties: Properties) {
     companion object {
         private const val CONFIGURATION_FILE_NAME = "neokotlin.properties"
+        private const val ENVIRON_VARIABLE_PREFIX = "neokotlin."
 
         fun read(): Config {
             return Config(readConfiguration())
@@ -38,7 +39,15 @@ class Config(private val properties: Properties) {
         private fun readConfiguration(ist: InputStream): Properties {
             return Properties().apply {
                 ist.use { load(it) }
+                // Environment options should override configuration so they go last
+                readPropertiesFromEnvironment(this)
             }
+        }
+
+        private fun readPropertiesFromEnvironment(properties: Properties) {
+            System.getenv()
+                .filterKeys { it.startsWith(ENVIRON_VARIABLE_PREFIX) }
+                .forEach { properties[it.key.drop(ENVIRON_VARIABLE_PREFIX.length)] = it.value }
         }
     }
 
